@@ -32,7 +32,8 @@
   "bundleDependencies": false,
   "dependencies": {
     "create-react-class": "^15.6.3",
-    "d3": "^3.5.17"
+    "d3": "^3.5.17",
+    "prop-types": "^15.7.2"
   },
   "deprecated": false,
   "description": "A ReactJS wrapper for the parallel coordinates d3 toolkit.",

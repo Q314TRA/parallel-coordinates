@@ -1,15 +1,17 @@
 'use strict';
 
-var React = require ('react');
-var ReactDOM = require ('react-dom');
-var d3 = require ('d3');
-var parcoords = require ('./parallel-coordinates/d3.parcoords.js');
+var React = require('react');
+var ReactDOM = require('react-dom');
+var d3 = require('d3');
+var parcoords = require('./parallel-coordinates/d3.parcoords.js');
+var PropTypes = require('prop-types');
+
 
 require('./parallel-coordinates/d3.parcoords.css'); // TODO: find a css solution that refrains from using globals
 
 var createReactClass = require('create-react-class');
 
-var ParallelCoordinatesComponent = createReactClass ({
+var ParallelCoordinatesComponent = createReactClass({
 	getDefaultProps: function () {
 		return {
 			state: { centroids: [], activeData: [] }
@@ -18,31 +20,31 @@ var ParallelCoordinatesComponent = createReactClass ({
 	getAdaptiveAlpha: function (data) {
 		if (data == undefined)
 			return 1;
-		var ratio = 100/data.length;
+		var ratio = 100 / data.length;
 		return Math.min(1, Math.max(ratio, 0.04));
 	},
 	onBrushEnd: function (data) {
 		this.props.onBrushEnd_data(data)
-		this.pc.alpha( this.getAdaptiveAlpha(data) ).render()
+		this.pc.alpha(this.getAdaptiveAlpha(data)).render()
 		this.props.onBrushEnd_extents(this.pc.brushExtents())
 		this.recalculateCentroids()
 	},
 	onBrush: function (data) {
-		this.pc.alpha( this.getAdaptiveAlpha(data) ).render()
+		this.pc.alpha(this.getAdaptiveAlpha(data)).render()
 		this.props.onBrush_extents(this.pc.brushExtents())
 	},
 	isOnLine: function (startPt, endPt, testPt, tol) { // from http://bl.ocks.org/mostaphaRoudsari/b4e090bb50146d88aec4
 		// check if test point is close enough to a line
 		// between startPt and endPt. close enough means smaller than tolerance
 		var x0 = testPt[0];
-		var	y0 = testPt[1];
+		var y0 = testPt[1];
 		var x1 = startPt[0];
-		var	y1 = startPt[1];
+		var y1 = startPt[1];
 		var x2 = endPt[0];
-		var	y2 = endPt[1];
+		var y2 = endPt[1];
 		var Dx = x2 - x1;
 		var Dy = y2 - y1;
-		var delta = Math.abs(Dy*x0 - Dx*y0 - x1*y2+x2*y1)/Math.sqrt(Math.pow(Dx, 2) + Math.pow(Dy, 2));
+		var delta = Math.abs(Dy * x0 - Dx * y0 - x1 * y2 + x2 * y1) / Math.sqrt(Math.pow(Dx, 2) + Math.pow(Dy, 2));
 		//console.log(delta);
 		if (delta <= tol) return true;
 		return false;
@@ -54,10 +56,10 @@ var ParallelCoordinatesComponent = createReactClass ({
 
 		// make sure it is inside the range of x
 		if (cenPts[0][0] > x) return false;
-		if (cenPts[cenPts.length-1][0] < x) return false;
+		if (cenPts[cenPts.length - 1][0] < x) return false;
 
 		// find between which segment the point is
-		for (var i=0; i<cenPts.length; i++){
+		for (var i = 0; i < cenPts.length; i++) {
 			if (cenPts[i][0] > x) return i;
 		}
 	},
@@ -65,14 +67,14 @@ var ParallelCoordinatesComponent = createReactClass ({
 		var clicked = [];
 		var clickedCenPts = [];
 
-		if (this.state===undefined || this.state.centroids.length==0) return false;
+		if (this.state === undefined || this.state.centroids.length == 0) return false;
 
 		// find between which axes the point is
 		var axeNum = this.findAxes(mousePosition, this.state.centroids[0]);
 		if (!axeNum) return false;
 
-		this.state.centroids.forEach(function(d, i){
-			if (this.isOnLine(d[axeNum-1], d[axeNum], mousePosition, 2)){
+		this.state.centroids.forEach(function (d, i) {
+			if (this.isOnLine(d[axeNum - 1], d[axeNum], mousePosition, 2)) {
 				clicked.push(this.state.activeData[i]);
 				clickedCenPts.push(this.state.centroids[i]); // for tooltip
 			}
@@ -95,7 +97,7 @@ var ParallelCoordinatesComponent = createReactClass ({
 		// recalculate centroids
 		var activeData = this.pc.brushed();
 		var centroids = [];
-		for (var i = 0; i<activeData.length; i++) {
+		for (var i = 0; i < activeData.length; i++) {
 			centroids[i] = this.pc.compute_real_centroids(activeData[i]);
 		}
 		this.setState({ centroids: centroids, activeData: activeData })
@@ -107,7 +109,7 @@ var ParallelCoordinatesComponent = createReactClass ({
 		// no data, only dimensions: do nothing
 		var numDimensions = Object.keys(this.props.dimensions).length;
 		if (this.props.data === undefined || this.props.data[0] === undefined || numDimensions > this.props.data[0].length) {
-			console.log("Not updating: not enough data for "+ numDimensions+" dimensions.");
+			console.log("Not updating: not enough data for " + numDimensions + " dimensions.");
 			return;
 		}
 
@@ -125,7 +127,7 @@ var ParallelCoordinatesComponent = createReactClass ({
 			.width(this.props.width)
 			.height(this.props.height)
 			.data(this.props.data) // set data again
-			.alpha( self.getAdaptiveAlpha(this.props.data) )
+			.alpha(self.getAdaptiveAlpha(this.props.data))
 			.dimensions(this.props.dimensions)
 			.brushMode("1D-axes") // enable brushing
 			.color(this.props.colour)
@@ -135,7 +137,7 @@ var ParallelCoordinatesComponent = createReactClass ({
 		// use custom domain if it is set
 		var dimKeys = Object.keys(this.props.dimensions);
 		dimKeys.forEach(
-			function(value, index) {
+			function (value, index) {
 				if (this.props.dimensions[value].hasOwnProperty('domain')) {
 					console.log("setting domain", this.props.dimensions[value].domain, "for dimension", this.props.dimensions[value]);
 					this.pc = this.pc.scale(value, this.props.dimensions[value].domain)
@@ -165,8 +167,8 @@ var ParallelCoordinatesComponent = createReactClass ({
 			if (brushExtents !== undefined) {
 				this.pc = this.pc
 					.brushExtents(brushExtents)
-					//.on("brushend", function (d) { self.onBrushEnd(d) })
-					//.on("brush", function (d) { self.onBrush(d) })
+				//.on("brushend", function (d) { self.onBrushEnd(d) })
+				//.on("brush", function (d) { self.onBrush(d) })
 			}
 		}
 
@@ -180,15 +182,15 @@ var ParallelCoordinatesComponent = createReactClass ({
 		var data = self.props.data;
 		var colour = self.props.colour;
 		this.pc = d3.parcoords({
-				//alpha: 0.2,
-				color: "#069",
-				shadowColor: "#f3f3f3", // does not exist in current PC version
-				width: this.props.width,
-				height: this.props.height,
-				dimensionTitleRotation: this.props.dimensionTitleRotation,
-				margin: { top: 33, right: 0, bottom: 12, left: 0 },
-				nullValueSeparator: "bottom",
-			})( DOMNode )
+			//alpha: 0.2,
+			color: "#069",
+			shadowColor: "#f3f3f3", // does not exist in current PC version
+			width: this.props.width,
+			height: this.props.height,
+			dimensionTitleRotation: this.props.dimensionTitleRotation,
+			margin: { top: 33, right: 0, bottom: 12, left: 0 },
+			nullValueSeparator: "bottom",
+		})(DOMNode)
 
 		this.pc = this.pc
 			.createAxes()
@@ -196,13 +198,13 @@ var ParallelCoordinatesComponent = createReactClass ({
 
 		//attach mouse listeners for mouse-over
 		d3.select(DOMNode).select('svg')
-			.on("mousemove", function() {
+			.on("mousemove", function () {
 				var mousePosition = d3.mouse(this);
 				mousePosition[1] = mousePosition[1] - 33; // this is margin top at the moment...
 				self.hoverLine(mousePosition)
 				//highlightLineOnClick(mousePosition, true); //true will also add tooltip
 			})
-			.on("mouseout", function(){
+			.on("mouseout", function () {
 				self.props.onLineHover(undefined)
 				//cleanTooltip();
 				//graph.unhighlight();
@@ -241,26 +243,26 @@ var ParallelCoordinatesComponent = createReactClass ({
 })
 
 ParallelCoordinatesComponent.propTypes = {
-	dimensions: React.PropTypes.object.isRequired,
-	data: React.PropTypes.array,
-	dataHighlighted: React.PropTypes.array,
-	width: React.PropTypes.number.isRequired,
-	height: React.PropTypes.number.isRequired,
-	brushExtents: React.PropTypes.array,
-	onBrush_extents: React.PropTypes.func,
-	onBrushEnd_data: React.PropTypes.func,
-	onBrushEnd_extents: React.PropTypes.func,
-	onLineHover: React.PropTypes.func,
-	colour: React.PropTypes.func,
-	dimensionTitleRotation: React.PropTypes.number,
+	dimensions: PropTypes.object.isRequired,
+	data: PropTypes.array,
+	dataHighlighted: PropTypes.array,
+	width: PropTypes.number.isRequired,
+	height: PropTypes.number.isRequired,
+	brushExtents: PropTypes.array,
+	onBrush_extents: PropTypes.func,
+	onBrushEnd_data: PropTypes.func,
+	onBrushEnd_extents: PropTypes.func,
+	onLineHover: PropTypes.func,
+	colour: PropTypes.func,
+	dimensionTitleRotation: PropTypes.number,
 }
 
 ParallelCoordinatesComponent.defaultProps = {
-	onBrush_extents: function() { },
-	onBrushEnd_data: function() { },
-	onBrushEnd_extents: function() { },
-	onLineHover: function() { },
-	colour: function() { return "#000000" },
+	onBrush_extents: function () { },
+	onBrushEnd_data: function () { },
+	onBrushEnd_extents: function () { },
+	onLineHover: function () { },
+	colour: function () { return "#000000" },
 	dimensionTitleRotation: 0,
 }
 
