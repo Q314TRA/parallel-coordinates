@@ -7,7 +7,9 @@ var parcoords = require ('./parallel-coordinates/d3.parcoords.js');
 
 require('./parallel-coordinates/d3.parcoords.css'); // TODO: find a css solution that refrains from using globals
 
-var ParallelCoordinatesComponent = React.createClass ({
+var createReactClass = require('create-react-class');
+
+var ParallelCoordinatesComponent = createReactClass ({
 	getDefaultProps: function () {
 		return {
 			state: { centroids: [], activeData: [] }
